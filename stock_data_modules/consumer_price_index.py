@@ -36,31 +36,32 @@ np.set_printoptions(threshold=sys.maxsize)
 from sklearn.model_selection import train_test_split 
 from sklearn.preprocessing import StandardScaler
 
-def get_CPI():
-    date = str(input("Please enter start date, cannot be earlier than 01-02-1988 (format Y-M-D): "))
+
+def get_CPI(startdate, enddate):
+    
     #uk
     uk_cpi = pd.read_csv("uk_cpi_energy.csv",skiprows = 7)
     uk_cpi.columns = ["Date", "CPI_percentage"]
     uk_cpi["Date"] = pd.to_datetime(uk_cpi["Date"], format = "%Y %b")
-    uk_cpi = uk_cpi.set_index("Date").resample('D').ffill()
-    uk_cpi = uk_cpi.loc[date:]
+    uk_cpi = uk_cpi.set_index("Date").resample('D').interpolate(method = "time")
+    uk_cpi = uk_cpi.loc[startdate:enddate]
     #us
     us_cpi = pd.read_excel("us_energy_cpi.xlsx",skiprows = 11)
     us_cpi = us_cpi[["Year", "Value"]]
     us_cpi.columns = ["Date", "CPI_rate"]
     us_cpi["Date"] = pd.to_datetime(us_cpi["Date"], format = "%Y-%M-%D")
-    us_cpi = us_cpi.set_index("Date").resample('D').ffill()
+    us_cpi = us_cpi.set_index("Date").resample('D').interpolate(method = "time")
     #both
     us_and_uk_cpi = us_cpi.merge(uk_cpi, on = 'Date', how = 'inner')
     us_and_uk_cpi.columns = ["CPI_rate_US", "CPI_rate_UK"]
 
     return us_and_uk_cpi
 
-def plot_CPI():
+def plot_CPI(startdate, enddate):
     plt.figure(figsize = (16,8))
-    get_CPI()["CPI_rate_US"].plot()
-    get_CPI()["CPI_rate_UK"].plot()
+    df = get_CPI(startdate, enddate)
+    df["CPI_rate_US"].plot()
+    df["CPI_rate_UK"].plot()
     plt.title("Consumer_price_index")
     plt.show()
-    
     
