@@ -5,7 +5,6 @@ Created on Fri Jul 22 18:26:44 2022
 combines stock of your choice, oil prices and 
 @author: samkd
 """
-
 # y finance client to grab the data 
 import yfinance as yf
 # matplotlib to plot stuff
@@ -35,19 +34,28 @@ import sys
 np.set_printoptions(threshold=sys.maxsize)
 from sklearn.model_selection import train_test_split 
 from sklearn.preprocessing import StandardScaler
+from stock_data_modules.oil_prices import *
+from stock_data_modules.stock_data import *
+from stock_data_modules.consumer_price_index import *
+from stock_data_modules.gasprices import *
 
-def combined_stock_dataset(stock):
-    df1 = oil_prices()
+def combined_stock_dataset(stock, startdate, enddate):
+    df1 = oil_prices(startdate, enddate)
     #date = str(input("Please enter start date, cannot be earlier than 01-02-1988 (format Y-M-D): "))
-    df = get_stock_data(stock)
+    df = get_stock_data(stock, startdate, enddate)
     # Create a new dataframe with only the 'Close column 
     data = df.filter(['Close'])
     data.columns = [f"Close_price_{stock}"]
     data = df1.merge(data.filter([f"Close_price_{stock}"]), on = 'Date', how = 'left')
     
-    us_and_uk_cpi = get_CPI()
+    us_and_uk_cpi = get_CPI(startdate, enddate)
     
     data = data.merge(us_and_uk_cpi, on = "Date", how = "left")
+    
+    nat_gas = get_gas_prices(startdate, enddate)
+    
+    data = data.merge(nat_gas, on = "Date", how = "left")
+    
     data = data.dropna()
     
     
